@@ -1,6 +1,7 @@
 /**
  * @file
  * Modifies CHANGELOG.md during npm-version command.
+ *
  */
 
 // @ts-nocheck
