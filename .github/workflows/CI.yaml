@@ -1,25 +1,54 @@
-name: PHP Sniffer CI
+name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [10]
+
     steps:
-      - name: Checkout code
+      - name: Check Out Code
         uses: actions/checkout@v2
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          php-version: '8.0' # Replace with your desired PHP version
+          node-version: ${{ matrix.node-version }}
 
-      - name: Install Composer dependencies
-        run: composer install
-        working-directory: ${{ github.workspace }}
+      - name: Cache NPM dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm-
 
-      - name: Run PHPUnit
-        run: ./test/fixtures/vendor
+      - name: Install NPM dependencies
+        run: npm install
 
-      # Add more steps for your specific project, like running PHP Sniffer, etc.
+      - name: Set up PHP (for test:integration)
+        if: ${{ matrix.TEST_SCRIPT == 'test:integration' }}
+        run: |
+          phpenv config-add test/php.ini
+          composer global require squizlabs/php_codesniffer:^3.4
+          echo 'export PATH="$PATH:~/.composer/vendor/bin"' >> $HOME/.bashrc
+        shell: bash
+
+      - name: Start Xvfb (for Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          export DISPLAY=':99.0'
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        shell: bash
+
+      - name: Run Tests
+        run: npm run ${{ matrix.TEST_SCRIPT }}
