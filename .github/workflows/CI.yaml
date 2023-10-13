@@ -17,6 +17,7 @@ jobs:
 
       - name: Install Composer dependencies
         run: composer install
+        working-directory: ${{ github.workspace }}
 
       - name: Run PHPUnit
         run: ./vendor/bin/phpunit
