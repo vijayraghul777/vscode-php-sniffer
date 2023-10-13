@@ -1,0 +1,6 @@
+{
+    "require": {
+        "respect/validation": "dev-master",
+        "doctrine/orm": "2.*"
+    }
+}
